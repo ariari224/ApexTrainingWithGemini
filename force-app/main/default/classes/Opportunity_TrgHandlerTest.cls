@@ -7,7 +7,8 @@ public with sharing class Opportunity_TrgHandlerTest {
     static void setupTestData() {
         // テストデータの作成
         Account acc = new Account(
-            Name = 'Test Account'
+            Name = 'Test Account',
+            Description = 'test'
         );
         insert acc;
 
@@ -15,7 +16,8 @@ public with sharing class Opportunity_TrgHandlerTest {
             Name = 'Test Opportunity', 
             AccountId = acc.Id, 
             StageName = 'Prospecting', 
-            CloseDate = Date.today()
+            CloseDate = Date.today(),
+            Amount = 100000
         );
         insert opp;
     }
@@ -56,5 +58,60 @@ public with sharing class Opportunity_TrgHandlerTest {
         Test.stopTest();
 
         System.assertEquals(200, [SELECT count() FROM Task]);
+    }
+
+    @isTest
+    static void testUpdateAccountAmount() {
+        Opportunity targetOpp = [SELECT Id, StageName, AccountId, Amount FROM Opportunity WHERE Name = 'Test Opportunity'];
+        targetOpp.Amount = 200000;
+
+        Test.startTest();
+        update targetOpp;
+        Test.stopTest();
+
+        Account targetAcc = [SELECT Id, Description FROM Account WHERE Id=:targetOpp.AccountId LIMIT 1];
+        System.assertEquals('現在の進行中商談の合計額は ¥200,000 です', targetAcc.Description, '集計処理が失敗しています。');
+    }
+
+    @isTest
+    static void testCreateOpp() {
+        Opportunity opp = new Opportunity(
+            Name = 'new Opp',
+            AccountId = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1].Id,
+            StageName = 'Prospecting',
+            CloseDate = Date.today(),
+            Amount = 300000
+        );
+        Test.startTest();
+        insert opp;
+        Test.stopTest();
+
+        Opportunity targetOpp = [SELECT Id, AccountId FROM Opportunity WHERE Name = 'new Opp'];
+        
+        Account targetAcc = [SELECT Id, Description FROM Account WHERE Id=:targetOpp.AccountId LIMIT 1];
+        System.assertEquals('現在の進行中商談の合計額は ¥400,000 です', targetAcc.Description, '集計処理が失敗しています。');
+    }
+
+    @isTest
+    static void testDeleteOpp() {
+        Opportunity targetOpp = [SELECT Id, AccountId FROM Opportunity WHERE Name = 'Test Opportunity'];
+        Test.startTest();
+        delete targetOpp;
+        Test.stopTest();
+
+        Account targetAcc = [SELECT Id, Description FROM Account WHERE Id=:targetOpp.AccountId LIMIT 1];
+        System.assertEquals('現在の進行中商談はありません。', targetAcc.Description, '集計処理が失敗しています。');
+    }
+
+    @isTest
+    static void testUndeleteOpp() {
+        Opportunity targetOpp = [SELECT Id, AccountId FROM Opportunity WHERE Name = 'Test Opportunity'];
+        Test.startTest();
+        delete targetOpp;
+        undelete targetOpp;
+        Test.stopTest();
+
+        Account targetAcc = [SELECT Id, Description FROM Account WHERE Id=:targetOpp.AccountId LIMIT 1];
+        System.assertEquals('現在の進行中商談の合計額は ¥100,000 です', targetAcc.Description, '集計処理が失敗しています。');
     }
 }
