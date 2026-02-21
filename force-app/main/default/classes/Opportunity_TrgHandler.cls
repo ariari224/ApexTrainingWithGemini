@@ -9,6 +9,13 @@ public with sharing class Opportunity_TrgHandler {
     }
 
     /**
+     * 作成前処理
+     */
+    public static void onBeforeInsert(List<Opportunity> newObjs) {
+        checkAmountLimit(newObjs);
+    }
+
+    /**
      * 作成後処理
      */
     public static void onAfterInsert(List<Opportunity> newObjs) {
@@ -19,6 +26,13 @@ public with sharing class Opportunity_TrgHandler {
             }
         }
         recalculateAccountSummaries(idsToRecalculate);
+    }
+
+    /**
+     * 更新前処理
+     */
+    public static void onBeforeUpdate(List<Opportunity> newObjs) {
+        checkAmountLimit(newObjs);
     }
 
     /**
@@ -128,5 +142,46 @@ public with sharing class Opportunity_TrgHandler {
 
         // 取引先を一括更新
         update accountMap.values();
+    }
+
+    /**
+     * 商談作成時あるいは更新時、取引先の信用度ランクに応じて商談金額が超過していないかチェックする
+     */
+    private static void checkAmountLimit(List<Opportunity> newObjs){
+        Set<Id> accountIds = new Set<Id>();
+        for (Opportunity opp : newObjs) {
+            accountIds.add(opp.AccountId);
+        }
+        Map<Id, Account> accountMap = new Map<Id, Account>([
+            SELECT Id, Rank__c FROM Account WHERE Id IN :accountIds
+        ]);
+        for (Opportunity opp : newObjs) {
+            Account acc = accountMap.get(opp.AccountId);
+            if (acc == null) {
+                continue;
+            }
+            Decimal limitAmount = 0;
+            Boolean unlimit = false;
+            switch on acc.Rank__c {
+                when 'Bronze' {
+                    limitAmount = 500000;
+                }
+                when 'Silver' {
+                    limitAmount = 5000000;
+                }
+                when 'Gold' {
+                    unlimit = true;
+                }
+                when else {
+                    limitAmount = 100000;
+                }
+            }
+            
+            // 上限あり(unlimitがfalse) かつ 上限額を超えている場合にエラー
+            if(!unlimit && opp.Amount > limitAmount){
+                String rankName = (acc.Rank__c != null) ? acc.Rank__c : '未設定';
+                opp.Amount.addError(rankName + 'ランクの取引先は、¥' + limitAmount.format() + ' 以上の商談を作成できません。');
+            }
+        }
     }
 }

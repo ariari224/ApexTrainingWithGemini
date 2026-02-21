@@ -1,6 +1,14 @@
 trigger Opportunity_Trg on Opportunity (before insert, after insert, before update, after update, after delete, after undelete) {
+    if (Trigger.isInsert && Trigger.isBefore) {
+        Opportunity_TrgHandler.onBeforeInsert(Trigger.new);
+    }
+    
     if (Trigger.isInsert && Trigger.isAfter) {
         Opportunity_TrgHandler.onAfterInsert(Trigger.new);
+    }
+
+    if (Trigger.isUpdate && Trigger.isBefore) {
+        Opportunity_TrgHandler.onBeforeUpdate(Trigger.new);
     }
 
     if (Trigger.isUpdate && Trigger.isAfter) {
