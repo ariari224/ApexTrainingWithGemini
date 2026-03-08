@@ -71,6 +71,17 @@ public with sharing class Opportunity_TrgHandler {
             }
         }
         recalculateAccountSummaries(idsToRecalculate);
+
+        // 商談クローズ時の未完了タスク自動クローズ
+        Set<Id> idsToOpp = new Set<Id>();
+        // 対象商談のIDを取得
+        for (Opportunity opp : newObjs) {
+            Opportunity oldOpp = oldMap.get(opp.Id);
+            if (!(oldOpp.StageName == 'Closed Won' || oldOpp.StageName == 'Closed Lost') && (opp.StageName == 'Closed Won' || opp.StageName == 'Closed Lost')) {
+                idsToOpp.add(opp.Id);
+            }
+        }
+        closeRelatedTasks(idsToOpp);
     }
 
 
@@ -183,5 +194,22 @@ public with sharing class Opportunity_TrgHandler {
                 opp.Amount.addError(rankName + 'ランクの取引先は、¥' + limitAmount.format() + ' 以上の商談を作成できません。');
             }
         }
+    }
+    /**
+     * 関連するタスクをクローズする
+     */
+    private static void closeRelatedTasks(Set<Id> oppIds) {
+        if (oppIds.isEmpty()) {
+            return;
+        }
+        
+        Map<Id, Task> taskMap = new Map<Id, Task>([
+            SELECT Id, Status FROM Task WHERE WhatId IN :oppIds AND status != 'Completed'
+        ]);
+
+        for (Task task : taskMap.values()) {
+            task.Status = 'Completed';
+        }
+        update taskMap;
     }
 }
