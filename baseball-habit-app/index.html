@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="theme-color" content="#1a2744" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+  <title>⚾ 習慣トラッカー</title>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <span class="ball-spin">⚾</span>
+      <h1>習慣トラッカー</h1>
+      <span class="ball-spin">⚾</span>
+    </div>
+    <p class="header-sub">毎日の努力がヒットを生む</p>
+  </header>
+
+  <!-- Tab Nav -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="goal">目標設定</button>
+    <button class="tab-btn" data-tab="record">記録する</button>
+    <button class="tab-btn" data-tab="board">スコアボード</button>
+  </nav>
+
+  <!-- ===== Goal Tab ===== -->
+  <section class="tab-content active" id="tab-goal">
+    <h2 class="section-title">⚾ 目標を設定しよう</h2>
+
+    <div class="card">
+      <div class="form-group">
+        <label for="goal-name">習慣の名前</label>
+        <input id="goal-name" type="text" placeholder="例: 毎日30分ランニング" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="goal-days">目標日数</label>
+          <input id="goal-days" type="number" value="30" min="1" max="365" />
+        </div>
+        <div class="form-group">
+          <label for="goal-cat">カテゴリ</label>
+          <select id="goal-cat">
+            <option value="トレーニング">⚾ トレーニング</option>
+            <option value="学習">📚 学習</option>
+            <option value="食事・健康">🥗 食事・健康</option>
+            <option value="メンタル">🧘 メンタル</option>
+            <option value="その他">🎯 その他</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-add-goal">⚾ 目標を追加する</button>
+    </div>
+
+    <div id="goal-list-section" class="hidden">
+      <h3 class="section-sub">現在の目標</h3>
+      <div id="goal-list" class="goal-grid"></div>
+    </div>
+
+    <div id="goal-empty" class="empty-state">
+      <p>まだ目標がありません。<br>最初の目標を設定しよう！</p>
+    </div>
+  </section>
+
+  <!-- ===== Record Tab ===== -->
+  <section class="tab-content" id="tab-record">
+    <h2 class="section-title">📝 今日の記録</h2>
+
+    <div id="record-has-goals">
+      <div class="card">
+        <div class="form-group">
+          <label for="record-date">記録する日付</label>
+          <input id="record-date" type="date" />
+        </div>
+      </div>
+
+      <div class="card checklist-card" id="checklist"></div>
+
+      <button class="btn-primary" id="btn-save-record">⚾ 記録を保存する</button>
+      <div id="save-msg" class="save-msg hidden">✅ 記録を保存しました！ナイスプレー！</div>
+    </div>
+
+    <div id="record-no-goals" class="empty-state hidden">
+      <p>先に目標を設定してください！</p>
+      <button class="btn-primary" id="btn-go-goal">目標を設定する</button>
+    </div>
+  </section>
+
+  <!-- ===== Scoreboard Tab ===== -->
+  <section class="tab-content" id="tab-board">
+    <h2 class="section-title">🏆 スコアボード</h2>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-goals">0</div>
+        <div class="stat-label">目標数</div>
+        <div class="stat-icon">🎯</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-days">0</div>
+        <div class="stat-label">総記録日数</div>
+        <div class="stat-icon">📅</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-streak">0</div>
+        <div class="stat-label">最長連続日数</div>
+        <div class="stat-icon">🔥</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-rate">0%</div>
+        <div class="stat-label">達成率</div>
+        <div class="stat-icon">⚾</div>
+      </div>
+    </div>
+
+    <!-- Diamond -->
+    <div class="card diamond-card">
+      <h3 class="section-sub" style="text-align:center">今週の進塁状況</h3>
+      <div class="diamond-wrap">
+        <div class="diamond">
+          <div class="base second"  id="base-2nd"><span>2塁</span></div>
+          <div class="base third"   id="base-3rd"><span>3塁</span></div>
+          <div class="base first"   id="base-1st"><span>1塁</span></div>
+          <div class="base home"    id="base-home"><span>本塁</span></div>
+          <div class="pitcher">🤾</div>
+        </div>
+      </div>
+      <p class="diamond-msg" id="diamond-msg">まだ今週の記録がありません。バッターボックスへ！</p>
+    </div>
+
+    <!-- Per-goal stats -->
+    <div id="board-goal-list"></div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">⚾ Play Ball! ⚾</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
