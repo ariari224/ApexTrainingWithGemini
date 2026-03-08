@@ -22,14 +22,31 @@ public with sharing class Opportunity_TrgHandlerTest {
 
         // 更新系テスト用の商談作成
         Account defaultAcc = [SELECT Id FROM Account WHERE Name = 'Test Account' LIMIT 1];
-        Opportunity opp = new Opportunity(
-            Name = 'Test Opportunity', 
-            AccountId = defaultAcc.Id, 
-            StageName = 'Prospecting', 
+        // Opportunity opp = new Opportunity(
+        //     Name = 'Test Opportunity', 
+        //     AccountId = defaultAcc.Id, 
+        //     StageName = 'Prospecting', 
+        //     CloseDate = Date.today(),
+        //     Amount = 100000
+        // );
+        // insert opp;
+        List<Opportunity> oppList = new List<opportunity>();
+        oppList.add(new Opportunity(
+            Name = 'Test Opportunity',
+            AccountId = defaultAcc.Id,
+            StageName = 'Prospecting',
             CloseDate = Date.today(),
             Amount = 100000
-        );
-        insert opp;
+        ));
+        oppList.add(new Opportunity(
+            Name = 'ClosedWonOpportunity',
+            AccountId = defaultAcc.Id,
+            StageName = 'Closed Won',
+            CloseDate = Date.today(),
+            Amount = 100000
+        ));
+        
+        insert oppList;
     }
 
     @IsTest
@@ -204,5 +221,73 @@ public with sharing class Opportunity_TrgHandlerTest {
             System.assert(e.getMessage().contains('未設定ランクの取引先は'), 'ランク名が「未設定」となっていること');
             System.assert(e.getMessage().contains('100,000'), '上限額が含まれていること');
         }
+    }
+
+    @isTest
+    static void testChangeClosedOpp1() {
+        Opportunity opp = [SELECT Id, StageName FROM Opportunity WHERE name = 'Test Opportunity' LIMIT 1];
+        Task task = new Task(
+            Subject = 'testTask', 
+            WhatId = opp.Id, 
+            Status = 'In Progress'
+        );
+        insert task;
+        Test.startTest();
+        opp.StageName = 'Closed Won';
+        update opp;
+        Test.stopTest();
+        Task updateTask = [SELECT Id, Status FROM Task WHERE Subject = 'testTask' LIMIT 1];
+        System.assertEquals('Completed', updateTask.Status, 'タスクのステータスが完了になっていません。');
+    }
+
+    @isTest
+    static void testChangeClosedOpp2() {
+        Opportunity opp = [SELECT Id, StageName FROM Opportunity WHERE name = 'Test Opportunity' LIMIT 1];
+        Task task = new Task(
+            Subject = 'testTask', 
+            WhatId = opp.Id, 
+            Status = 'Completed'
+        );
+        insert task;
+        Test.startTest();
+        opp.StageName = 'Closed Won';
+        update opp;
+        Test.stopTest();
+        Task updateTask = [SELECT Id, Status FROM Task WHERE Subject = 'testTask' LIMIT 1];
+        System.assertEquals('Completed', updateTask.Status, 'タスクのステータスが完了になっていません。');
+    }
+
+    @isTest
+    static void testChangeClosedOpp3() {
+        Opportunity opp = [SELECT Id, Amount FROM Opportunity WHERE name = 'ClosedWonOpportunity' LIMIT 1];
+        Task task = new Task(
+            Subject = 'testTask', 
+            WhatId = opp.Id, 
+            Status = 'In Progress'
+        );
+        insert task;
+        Test.startTest();
+        opp.Amount = 200000;
+        update opp;
+        Test.stopTest();
+        Task updateTask = [SELECT Id, Status FROM Task WHERE Subject = 'testTask' LIMIT 1];
+        System.assertEquals('In Progress', updateTask.Status, 'タスクのステータスが変更されています。');
+    }
+
+    @isTest
+    static void testChangeClosedOpp4() {
+        Opportunity opp = [SELECT Id, StageName FROM Opportunity WHERE name = 'ClosedWonOpportunity' LIMIT 1];
+        Task task = new Task(
+            Subject = 'testTask', 
+            WhatId = opp.Id, 
+            Status = 'In Progress'
+        );
+        insert task;
+        Test.startTest();
+        opp.StageName = 'Closed Lost';
+        update opp;
+        Test.stopTest();
+        Task updateTask = [SELECT Id, Status FROM Task WHERE Subject = 'testTask' LIMIT 1];
+        System.assertEquals('In Progress', updateTask.Status, 'タスクのステータスが変更されています。');
     }
 }
